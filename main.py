@@ -1,65 +1,79 @@
 import sys
 import random
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
-from PyQt6.uic import loadUiType
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush
 from PyQt6.QtCore import Qt, QSize, QRect
 
 
-UI_Class, BaseClass = loadUiType("UI.ui")
+class MainWindowDesign: 
+    def setupUi(self, MainWindow):
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(500, 450)
+        self.centralwidget = QWidget(MainWindow)
+        self.verticalLayout = QVBoxLayout(self.centralwidget)
+        self.canvasPlaceholder = QWidget(self.centralwidget)
+        self.verticalLayout.addWidget(self.canvasPlaceholder)
+        self.pushButton = QPushButton(self.centralwidget)
+        self.pushButton.setMinimumSize(QSize(0, 40))
+        self.pushButton.setText("Нарисовать новый круг")
+        self.verticalLayout.addWidget(self.pushButton)
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = MainWindow.menuBar()
+        self.statusbar = MainWindow.statusBar()
 
 
 class CanvasWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.circles_data = []
+        self.current_circle_data = None 
         self.setMinimumSize(QSize(400, 300))
         self.setStyleSheet("background-color: white;")
 
-    def add_circle(self, x, y, radius):
-        self.circles_data = [{'x': x, 'y': y, 'radius': radius}]
+    def set_circle(self, x, y, radius, color):
+        self.current_circle_data = {'x': x, 'y': y, 'radius': radius, 'color': color}
         self.update() 
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        background_color = self.palette().color(self.backgroundRole()) 
-        painter.fillRect(QRect(0, 0, self.width(), self.height()), QBrush(background_color))
-
-        yellow_color = QColor(255, 255, 0)
-
         painter.setPen(QPen(Qt.PenStyle.NoPen)) 
         
-        painter.setBrush(QBrush(yellow_color, Qt.BrushStyle.SolidPattern))
-
-        for circle in self.circles_data:
+        if self.current_circle_data:
+            circle = self.current_circle_data
+            painter.setBrush(QBrush(circle['color'], Qt.BrushStyle.SolidPattern))
             painter.drawEllipse(circle['x'] - circle['radius'],
                                 circle['y'] - circle['radius'],
                                 circle['radius'] * 2,
                                 circle['radius'] * 2)
 
-class MainWindow(QMainWindow, UI_Class):
+class MainWindow(QMainWindow, MainWindowDesign):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-
-        self.setWindowTitle("Круги на форме")
+        self.setWindowTitle("Один Центральный Круг")
 
         self.canvas = CanvasWidget(self)
         layout = self.centralwidget.layout()
         layout.replaceWidget(self.canvasPlaceholder, self.canvas)
         self.canvasPlaceholder.deleteLater()
 
-        self.pushButton.clicked.connect(self.add_random_circle)
+        self.pushButton.clicked.connect(self.draw_new_circle)
 
-    def add_random_circle(self):
+    def draw_new_circle(self):
         
         canvas_width = self.canvas.width()
         canvas_height = self.canvas.height()
+    
+        radius = random.randint(15, 100) 
         
-        radius = random.randint(15, 40)
+        x = canvas_width // 2
+        y = canvas_height // 2
 
-        self.canvas.add_circle(canvas_width // 2, canvas_height // 2, radius)
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+        random_color = QColor(r, g, b)
+        self.canvas.set_circle(x, y, radius, random_color)
 
 
 if __name__ == "__main__":
